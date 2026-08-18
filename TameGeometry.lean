@@ -1,1 +1,6 @@
 import TameGeometry.Basic
+import TameGeometry.Definability
+import TameGeometry.Topology
+import TameGeometry.Monotonicity
+import TameGeometry.ExtremeValue
+import TameGeometry.IntermediateValue
