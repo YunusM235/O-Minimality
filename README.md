@@ -1,13 +1,10 @@
-# TameGeometry
+# O-Minimality
 
-## GitHub configuration
+Formalization of the following results in Lean:
 
-To set up your new GitHub repository, follow these steps:
+- Monotonicity theorem for o-minimal structures
+- Extreme Value Theorem and Intermediate Value Theorem for definably complete structures
 
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
+In Definability.lean and Tactic.lean I added an aesop tactic for solving definability goals. All 
+definability proofs for the Monotonicity Theorem are automated with this tactic.
 
-After following the steps above, you can remove this section from the README file.
