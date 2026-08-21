@@ -7,10 +7,10 @@ open FirstOrder FirstOrder.Language
 
 namespace TameGeometry
 
-variable {M : Type*} {L : Language} [L.IsOrdered] [L.Structure M]
-  [M ⊨ L.dlo] [LinearOrder M] [L.OrderedStructure M]
-  [TopologicalSpace M] [OrderTopology M] [Nonempty M]
-  [NoMinOrder M] [NoMaxOrder M] [DefinablyComplete L M]
+variable {M : Type*} [LinearOrder M] [TopologicalSpace M]
+  [OrderTopology M] [NoMinOrder M] [NoMaxOrder M]
+  {L : Language} [L.IsOrdered] [L.Structure M]
+  [M ⊨ L.dlo] [L.OrderedStructure M] [DefinablyComplete L M]
 
 private def memBox {n : ℕ} (p : Fin n ⊕ Fin n → M) (x : Fin n → M) : Prop :=
   ∀ i, p (Sum.inl i) < x i ∧ x i < p (Sum.inr i)
@@ -60,31 +60,31 @@ lemma cbd_init_closed {n : ℕ} {s : Set (Fin (n + 1) → M)}
   rw [← closure_subset_iff_isClosed]
   intro x hx
   rw [closure_order n] at hx
-  have h4 : ∀ y : Fin n ⊕ Fin n → M, memBox y x → (lastFromBox s y).Nonempty := by
+  have h5 : ∀ y : Fin n ⊕ Fin n → M, memBox y x → (lastFromBox s y).Nonempty := by
     intro y hy
     obtain ⟨w, ⟨x, h1x, h2x⟩, hw⟩ :=
       hx (fun i ↦ y (Sum.inl i)) (fun i ↦ y (Sum.inr i)) hy
     exact ⟨x (Fin.last n), w, hw, by grind [Fin.snoc_init_self]⟩
-  have h5 : ∀ (y : Fin n ⊕ Fin n → M) {t}, t ∈ lastFromBox s y →
+  have h6 : ∀ (y : Fin n ⊕ Fin n → M) {t}, t ∈ lastFromBox s y →
     a (Fin.last n) ≤ t ∧ t ≤ b (Fin.last n) := by
     intro y h1y ⟨h2y, h3y⟩
     exact ⟨by grind [Fin.snoc_last, ha h3y.2 (Fin.last n)],
       by grind [Fin.snoc_last, hb h3y.2 (Fin.last n)]⟩
-  have h6 : ∀ y : Fin n ⊕ Fin n → M, memBox y x → ∃ u, IsLUB (lastFromBox s y) u :=
-    fun p hp ↦ DefinablyComplete.lub (L := L) (lastFromBox s p) (h4 p hp)
+  have h7 : ∀ y : Fin n ⊕ Fin n → M, memBox y x → ∃ u, IsLUB (lastFromBox s y) u :=
+    fun p hp ↦ DefinablyComplete.lub (L := L) (lastFromBox s p) (h5 p hp)
       (def_family_fiber' (by definability) p)
-      ⟨b (Fin.last n), fun t ht ↦ (h5 p ht).2⟩
-  have h7 : (boxLUB s x).Nonempty := by
+      ⟨b (Fin.last n), fun t ht ↦ (h6 p ht).2⟩
+  have h8 : (boxLUB s x).Nonempty := by
     choose a ha using fun i ↦ exists_lt (x i)
     choose b hb using fun i ↦ exists_gt (x i)
-    obtain ⟨u, hu⟩ := h6 (Sum.elim a b) fun i ↦ ⟨ha i, hb i⟩
+    obtain ⟨u, hu⟩ := h7 (Sum.elim a b) fun i ↦ ⟨ha i, hb i⟩
     exact ⟨u, _, fun i ↦ ⟨ha i, hb i⟩, hu⟩
-  have h8 : BddBelow (boxLUB s x) := ⟨a (Fin.last n), by
+  have h9 : BddBelow (boxLUB s x) := ⟨a (Fin.last n), by
     intro u ⟨p, hp, hup⟩
-    obtain ⟨t, ht⟩ := h4 p hp
-    exact (h5 p ht).1.trans (hup.1 ht)⟩
-  obtain ⟨c, hc⟩ := DefinablyComplete.glb (L := L) (boxLUB s x) h7 (by definability) h8
-  refine ⟨Fin.snoc x c, snoc_glb_mem h1 h6 hc, Fin.init_snoc _ _⟩
+    obtain ⟨t, ht⟩ := h5 p hp
+    exact (h6 p ht).1.trans (hup.1 ht)⟩
+  obtain ⟨c, hc⟩ := DefinablyComplete.glb (L := L) (boxLUB s x) h8 (by definability) h9
+  refine ⟨Fin.snoc x c, snoc_glb_mem h1 h7 hc, Fin.init_snoc _ _⟩
 
 lemma cbd_projection_closed (n : ℕ) {m : ℕ} (hn : n ≤ m)
     {s : Set (Fin m → M)} (h1 : IsClosed s) (h2 : BddBelow s)
@@ -100,23 +100,8 @@ lemma cbd_projection_closed (n : ℕ) {m : ℕ} (hn : n ≤ m)
       = Fin.take n (Nat.le_add_right n k) ∘ Fin.init := by rfl
     rw [this, Set.image_comp]
     exact ih (Nat.le_add_right n k) (cbd_init_closed h1 h2 h3 h4)
-      (by
-        obtain ⟨x, hx⟩ := h2
-        use Fin.init x
-        intro y hy i
-        simp only [Set.mem_image] at hy
-        obtain ⟨y', hy'⟩ := hy
-        rw [← hy'.2]
-        exact hx hy'.1 i.castSucc
-        )
-      (by
-        obtain ⟨x, hx⟩ := h3
-        use Fin.init x
-        intro y hy i
-        simp only [Set.mem_image] at hy
-        obtain ⟨y', hy'⟩ := hy
-        rw [← hy'.2]
-        exact hx hy'.1 i.castSucc)
+      (Monotone.map_bddBelow (f:= Fin.init) (by intro _ _ h i; exact h i.castSucc) h2)
+      (Monotone.map_bddAbove (f:= Fin.init) (by intro _ _ h i; exact h i.castSucc) h3)
       (by definability)
 
 /-- Projection to first coordinates of cbd subset is closed -/
@@ -128,6 +113,9 @@ lemma cbd_first_closed {n : ℕ} {s : Set (Fin (n + 1) → M)}
   rw [← Set.image_comp] at this
   exact this
 
+variable [Nonempty M]
+
+omit [NoMinOrder M] [NoMaxOrder M] in
 private theorem monotone_inter₁_rel {R : M → M → Prop}
     (h1r : ∀ x, ¬ R x x) (h2r : ∀ {x y}, x ≠ y → R x y ∨ R y x)
     {f : M → Set M} (h1 : def_family_univ₁ L f)
@@ -141,9 +129,7 @@ private theorem monotone_inter₁_rel {R : M → M → Prop}
     let x := Classical.arbitrary M
     obtain ⟨p, hp⟩ := h6 x
     use p
-    intro q hq
-    obtain ⟨y, hy⟩ := hq
-    rw [← hy]
+    rintro q ⟨y, rfl⟩
     by_cases! h : y = x
     · rw [h]
       exact hp (h1g x)
@@ -157,26 +143,23 @@ private theorem monotone_inter₁_rel {R : M → M → Prop}
   let X := {x | ¬ R i x }
   have h1X : X.Nonempty := ⟨i, h1r i⟩
   have h2X : g '' X ⊆ f i := by
-    intro y hy
-    obtain ⟨x, hx⟩ := hy
-    rw [← hx.2]
+    rintro y ⟨x, hx, rfl⟩
     by_cases! h : x = i
     · rw [h]
       exact h1g i
-    · exact h2 ((h2r h).resolve_right hx.1) (h1g x)
+    · exact h2 ((h2r h).resolve_right hx) (h1g x)
   have h3X : IsLUB (g '' X) c := by
     refine ⟨upperBounds_mono_set (Set.image_subset_range g X) hc.1, ?_⟩
     intro d hd
     apply hc.2
-    intro e he
-    obtain ⟨e', he'⟩ := he
-    rw [← he']
+    rintro e ⟨e', rfl⟩
     by_cases! h : ¬ R i e'
     · exact hd ⟨e', ⟨h, rfl⟩⟩
     · exact (h2g i e' h).trans (hd ⟨i, ⟨h1r i, rfl⟩⟩)
   rw [← (h4 i).closure_eq]
   exact closure_mono h2X (h3X.mem_closure (h1X.image g))
 
+omit [NoMinOrder M] [NoMaxOrder M] in
 theorem monotone_inter₁ {f : M → Set M} (h1 : def_family_univ₁ L f)
     (h2 : ∀ {x y}, x < y → f y ⊆ f x) (h3 : ∀ x, (f x).Nonempty) (h4 : ∀ x, IsClosed (f x))
     (h5 : ∀ x, BddBelow (f x)) (h6 : ∀ x, BddAbove (f x)) :
@@ -184,6 +167,7 @@ theorem monotone_inter₁ {f : M → Set M} (h1 : def_family_univ₁ L f)
   exact monotone_inter₁_rel
     (R:=(·>·)) (fun x ↦ lt_irrefl x) (fun h ↦ h.lt_or_gt.symm) h1 h2 h3 h4 h5 h6
 
+omit [NoMinOrder M] [NoMaxOrder M] in
 /--
 Same as monotone_inter₁ but for a increasing family instead of decreasing.
 -/
@@ -217,25 +201,20 @@ private theorem monotone_inter_rel {n : ℕ} {R : M → M → Prop}
       (fun hab ↦ Set.preimage_mono (h2 hab))
       (by
         intro x
-        obtain ⟨v, hv⟩ := ha x
-        rw [← hv.2]
+        obtain ⟨v, hv, rfl⟩ := ha x
         use Fin.tail v
         apply Set.mem_preimage.mpr
         simp only [Fin.cons_self_tail]
-        exact hv.1)
+        exact hv)
       (fun x ↦ (h4 x).preimage (continuous_const.finCons continuous_id))
       (by
         intro x
         obtain ⟨r, hr⟩ := h5 x
-        use Fin.tail r
-        intro y hy i
-        exact hr hy i.succ)
+        exact ⟨Fin.tail r, fun y hy i ↦ hr hy i.succ⟩)
       (by
         intro x
         obtain ⟨r, hr⟩ := h6 x
-        use Fin.tail r
-        intro y hy i
-        exact hr hy i.succ)
+        exact ⟨Fin.tail r, fun y hy i ↦ hr hy i.succ⟩)
     rw [Set.mem_iInter] at hb
     exact ⟨Fin.cons a b, Set.mem_iInter.mpr hb⟩
 
@@ -264,11 +243,8 @@ lemma cbd_image_bdd_below₁ {n : ℕ} {s : Set (Fin n → M)}
   by_contra h
   have h1g : ∀ r, (g r).Nonempty := by
     intro r
-    obtain ⟨x, hx⟩ := not_bddBelow_iff.mp h r
-    obtain ⟨x', hx'⟩ := hx.1
-    use x'
-    rw [← hx'.2] at hx
-    exact ⟨hx'.1, hx.2.le⟩
+    obtain ⟨x, ⟨x' ,hx', rfl⟩, hr⟩ := not_bddBelow_iff.mp h r
+    exact ⟨x', hx', hr.le⟩
   have h2g : ∀ r, IsClosed (g r) :=
     fun r ↦ h2f.preimage_isClosed_of_isClosed h1 isClosed_Iic
   have h3g : ∀ r, BddBelow (g r) := fun r ↦ BddBelow.mono (Set.sep_subset s _) h2
@@ -286,11 +262,8 @@ lemma cbd_image_bdd_above₁ {n : ℕ} {s : Set (Fin n → M)}
   by_contra h
   have h1g : ∀ r, (g r).Nonempty := by
     intro r
-    obtain ⟨x, hx⟩ := not_bddAbove_iff.mp h r
-    obtain ⟨x', hx'⟩ := hx.1
-    use x'
-    rw [← hx'.2] at hx
-    exact ⟨hx'.1, hx.2.le⟩
+    obtain ⟨x, ⟨x', hx', rfl⟩, hr⟩ := not_bddAbove_iff.mp h r
+    exact ⟨x', hx', hr.le⟩
   have h2g : ∀ r, IsClosed (g r) :=
     fun r ↦ h2f.preimage_isClosed_of_isClosed h1 isClosed_Ici
   have h3g : ∀ r, BddBelow (g r) := fun r ↦ BddBelow.mono (Set.sep_subset s _) h2
@@ -333,12 +306,7 @@ lemma cbd_image_closed {n : ℕ} {m : ℕ} {s : Set (Fin n → M)}
     exact (Fin.continuous_append m n).comp_continuousOn (h2f.prodMk continuousOn_id)
   have h3g1 : Fin.take m (Nat.le_add_right m n) '' (g1 '' s) = f '' s := by
     rw [← Set.image_comp]
-    simp only [Function.comp_apply]
-    apply Set.image_congr
-    intro a ha
-    ext x
-    simp only [Fin.take_apply]
-    exact Fin.append_left' (f a) a x
+    exact Set.image_congr fun a ha ↦ funext fun x ↦ (Fin.append_left' (f a) a x)
   have h4g1 : IsClosed (g1 '' s) := by
     have : g1 '' s = {w | w ∈ g2 ⁻¹' s ∧ g1 (g2 w) = w} := by
       ext x
@@ -380,9 +348,8 @@ theorem extreme_value_min {n : ℕ} {s : Set (Fin n → M)}
     ∃ a ∈ s, IsLeast (f '' s) (f a) := by
   obtain ⟨hs1, hs2, hs3, hs4⟩ := cbd_image_is_cbd₁ h1 h2 h3 h4 h1f h2f
   obtain ⟨a, ha⟩ := isLeast_of_closed hs4 (h5.image f) hs2 hs1
-  obtain ⟨a', ha'⟩ := ha.1
-  rw [← ha'.2] at ha
-  exact ⟨a', ha'.1, ha⟩
+  obtain ⟨a', ha', rfl⟩ := ha.1
+  exact ⟨a', ha', ha⟩
 
 theorem extreme_value_max {n : ℕ} {s : Set (Fin n → M)}
     (h1 : IsClosed s) (h2 : BddBelow s) (h3 : BddAbove s)
@@ -391,9 +358,8 @@ theorem extreme_value_max {n : ℕ} {s : Set (Fin n → M)}
     ∃ b ∈ s, IsGreatest (f '' s) (f b) := by
   obtain ⟨hs1, hs2, hs3, hs4⟩ := cbd_image_is_cbd₁ h1 h2 h3 h4 h1f h2f
   obtain ⟨b, hb⟩ := isGreatest_of_closed hs4 (h5.image f) hs3 hs1
-  obtain ⟨b', hb'⟩ := hb.1
-  rw [← hb'.2] at hb
-  exact ⟨b', hb'.1, hb⟩
+  obtain ⟨b', hb', rfl⟩ := hb.1
+  exact ⟨b', hb', hb⟩
 
 /-- Let f : M^n → M be a definable function. Let
   X be a CBD subset of M^n and let f be continuous on X.
