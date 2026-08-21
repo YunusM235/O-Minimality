@@ -1,4 +1,5 @@
-import TameGeometry.Basic
+import TameGeometry.DefinablyComplete
+import TameGeometry.Topology
 import Mathlib.Data.Fin.Tuple.Take
 import Mathlib.Topology.Homeomorph.Lemmas
 
@@ -378,11 +379,10 @@ theorem extreme_value_min {n : ℕ} {s : Set (Fin n → M)}
     (h1f : Set.univ.DefinableFun L f) (h2f : ContinuousOn f s) :
     ∃ a ∈ s, IsLeast (f '' s) (f a) := by
   obtain ⟨hs1, hs2, hs3, hs4⟩ := cbd_image_is_cbd₁ h1 h2 h3 h4 h1f h2f
-  obtain ⟨c, hc⟩ := DefinablyComplete.glb (f '' s) (Set.Nonempty.image f h5) hs4 hs2
-  obtain ⟨a, ha⟩ := hc.mem_of_isClosed (h5.image f) hs1
-  refine ⟨a, ha.1, ?_⟩
-  rw [ha.2]
-  exact ⟨hc.mem_of_isClosed (h5.image f) hs1, hc.1⟩
+  obtain ⟨a, ha⟩ := isLeast_of_closed hs4 (h5.image f) hs2 hs1
+  obtain ⟨a', ha'⟩ := ha.1
+  rw [← ha'.2] at ha
+  exact ⟨a', ha'.1, ha⟩
 
 theorem extreme_value_max {n : ℕ} {s : Set (Fin n → M)}
     (h1 : IsClosed s) (h2 : BddBelow s) (h3 : BddAbove s)
@@ -390,11 +390,10 @@ theorem extreme_value_max {n : ℕ} {s : Set (Fin n → M)}
     (h1f : Set.univ.DefinableFun L f) (h2f : ContinuousOn f s) :
     ∃ b ∈ s, IsGreatest (f '' s) (f b) := by
   obtain ⟨hs1, hs2, hs3, hs4⟩ := cbd_image_is_cbd₁ h1 h2 h3 h4 h1f h2f
-  obtain ⟨c, hc⟩ := DefinablyComplete.lub (f '' s) (h5.image f) hs4 hs3
-  obtain ⟨b, hb⟩ := hc.mem_of_isClosed (h5.image f) hs1
-  refine ⟨b, hb.1, ?_⟩
-  rw [hb.2]
-  exact ⟨hc.mem_of_isClosed (h5.image f) hs1, hc.1⟩
+  obtain ⟨b, hb⟩ := isGreatest_of_closed hs4 (h5.image f) hs3 hs1
+  obtain ⟨b', hb'⟩ := hb.1
+  rw [← hb'.2] at hb
+  exact ⟨b', hb'.1, hb⟩
 
 /-- Let f : M^n → M be a definable function. Let
   X be a CBD subset of M^n and let f be continuous on X.

@@ -1,4 +1,4 @@
-import TameGeometry.Basic
+import TameGeometry.OMinimal
 
 namespace TameGeometry
 

@@ -2,12 +2,12 @@ import Mathlib.Order.Interval.Set.Infinite
 import Mathlib.Topology.Order.DenselyOrdered
 import TameGeometry.Definability
 import TameGeometry.Topology
+import TameGeometry.DefinablyComplete
 
 /-!
-# O-Minimality and definable completeness
+# O-Minimality
 
-we define O-Minimality and definable completeness
-and we show some basic properties.
+we define o-minimality and show some basic properties.
 
 -/
 
@@ -32,13 +32,6 @@ def IsTame (s : Set M) : Prop :=
 class OMinimal (L : Language) (M : Type*) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo]
   [LinearOrder M] [L.OrderedStructure M] : Prop where
   is_ominimal : ∀ {s : Set M}, Set.univ.Definable₁ L s → IsTame s
-
-/-- A structure is definably complete if
-every non-empty bounded definable set has an infimum and supremum in the structure -/
-class DefinablyComplete (L : Language) (M : Type*) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo]
-  [LinearOrder M] [L.OrderedStructure M] : Prop where
-  glb : ∀ (s : Set M), s.Nonempty → Set.univ.Definable₁ L s → BddBelow s → ∃ a, IsGLB s a
-  lub : ∀ (s : Set M), s.Nonempty → Set.univ.Definable₁ L s → BddAbove s → ∃ b, IsLUB s b
 
 lemma tame_induction (P : Set M → Prop) (h0 : P ∅)
     (hi : ∀ (s b : Set M), IsTame s → IsBasic b → P s → P (s ∪ b)) :
@@ -307,29 +300,6 @@ lemma finite_in_interval_gap [DenselyOrdered M] {a b : M} (hab : a < b)
     obtain ⟨x, hx⟩ := exists_between hab
     use x
     grind
-
-lemma exists_definableFun_lub [DefinablyComplete L M] {s : M → Set M} (h1s : def_family_univ₁ L s)
-    (h2s : ∀ x, (s x).Nonempty) (h3s : ∀ x, BddAbove (s x)) :
-    ∃ g : M → M, Set.univ.DefinableFun₁ L g ∧ ∀ x, IsLUB (s x) (g x) := by
-  have : ∀ x, ∃ y, IsLUB (s x) y := by
-    intro x
-    exact DefinablyComplete.lub (s x) (h2s x) (def_family_fiber_univ₁ h1s x) (h3s x)
-  choose g hg using this
-  use g
-  refine ⟨?_, hg⟩
-  apply Set.definableFun₁_of_graph
-  have : {w : Fin 2 → M | g (w 0) = w 1} = {w : Fin 2 → M | IsLUB (s (w 0)) (w 1)} := by
-    ext w
-    simp only [Set.mem_ofPred_eq]
-    constructor
-    · intro hw
-      rw [← hw]
-      exact hg (w 0)
-    · intro hw
-      symm
-      exact hw.unique (hg (w 0))
-  rw [this]
-  exact def_family_lub_univ₁ h1s
 
 lemma isBasic_ordConnected {s : Set M} (hb : IsBasic s) : s.OrdConnected := by
   cases hb with
