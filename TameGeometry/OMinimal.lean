@@ -64,45 +64,23 @@ lemma bdd_above_basic [NoMaxOrder M] (s : Set M) (h1 : IsBasic s) (h2 : BddAbove
   cases h1 with
   | point p => left; use p
   | Ioo a b => right; left; use a, b
-  | Ioi a => by_contra; exact absurd h2 (not_bddAbove_Ioi a)
+  | Ioi a =>  exact absurd h2 (not_bddAbove_Ioi a)
   | Iio b => right; right; use b
-  | Iii => by_contra; exact absurd h2 not_bddAbove_univ
+  | Iii => exact absurd h2 not_bddAbove_univ
 
 /-- basic sets which are bounded below have an infimum -/
 lemma bdd_below_basic_glb [NoMinOrder M] [DenselyOrdered M]
     (s : Set M) (h1 : IsBasic s) (h2 : BddBelow s) :
     ∃ x, IsGLB s x := by
-  obtain h3 | h4 | h5 := bdd_below_basic s h1 h2
-  · obtain ⟨p, hp⟩ := h3
-    use p
-    rw [hp]
-    exact isGLB_singleton
-  · obtain ⟨a, b, hab⟩ := h4
-    use a
-    rw [hab.right]
-    exact isGLB_Ioo hab.left
-  · obtain ⟨a, ha⟩ := h5
-    use a
-    rw [ha]
-    exact isGLB_Ioi
+  obtain ⟨p, rfl⟩ | ⟨a, b, hab, rfl⟩ | ⟨a, rfl⟩ := bdd_below_basic s h1 h2
+  exacts [⟨p, isGLB_singleton⟩, ⟨a, isGLB_Ioo hab⟩, ⟨a, isGLB_Ioi⟩]
 
 /-- basic sets which are bounded above have a supremum -/
 lemma bdd_above_basic_lub [NoMaxOrder M] [DenselyOrdered M]
     (s : Set M) (h1 : IsBasic s) (h2 : BddAbove s) :
     ∃ x, IsLUB s x := by
-  obtain h3 | h4 | h5 := bdd_above_basic s h1 h2
-  · obtain ⟨p, hp⟩ := h3
-    use p
-    rw [hp]
-    exact isLUB_singleton
-  · obtain ⟨a, b, hab⟩ := h4
-    use b
-    rw [hab.right]
-    exact isLUB_Ioo hab.left
-  · obtain ⟨b, hb⟩ := h5
-    use b
-    rw [hb]
-    exact isLUB_Iio
+  obtain ⟨p, rfl⟩ | ⟨a, b, hab, rfl⟩ | ⟨b, rfl⟩ := bdd_above_basic s h1 h2
+  exacts [⟨p, isLUB_singleton⟩, ⟨b, isLUB_Ioo hab⟩, ⟨b, isLUB_Iio⟩]
 
 /-- Bounded below tame sets have an infimum -/
 lemma has_glb [NoMinOrder M] [DenselyOrdered M] :
@@ -110,13 +88,11 @@ lemma has_glb [NoMinOrder M] [DenselyOrdered M] :
   apply tame_induction
   · simp
   · intro s b h1 h2 h3 h4 h5
-    by_cases h : s.Nonempty
+    by_cases! h : s.Nonempty
     · obtain ⟨xs, hxs⟩ := (h3 h (h5.mono Set.subset_union_left))
       obtain ⟨xb, hxb⟩ := bdd_below_basic_glb b h2 (h5.mono Set.subset_union_right)
-      use (min xs xb)
-      exact IsGLB.union hxs hxb
-    · push Not at h
-      subst h
+      exact ⟨min xs xb, IsGLB.union hxs hxb⟩
+    · subst h
       rw [Set.empty_union] at *
       exact bdd_below_basic_glb b h2 h5
 
@@ -126,13 +102,11 @@ lemma has_lub [NoMaxOrder M] [DenselyOrdered M] :
   apply tame_induction
   · simp
   · intro s b h1 h2 h3 h4 h5
-    by_cases h : s.Nonempty
+    by_cases! h : s.Nonempty
     · obtain ⟨xs, hxs⟩ := (h3 h (h5.mono Set.subset_union_left))
       obtain ⟨xb, hxb⟩ := bdd_above_basic_lub b h2 (h5.mono Set.subset_union_right)
-      use (max xs xb)
-      exact IsLUB.union hxs hxb
-    · push Not at h
-      subst h
+      exact ⟨max xs xb, IsLUB.union hxs hxb⟩
+    · subst h
       rw [Set.empty_union] at *
       exact bdd_above_basic_lub b h2 h5
 
@@ -141,22 +115,11 @@ lemma has_lub [NoMaxOrder M] [DenselyOrdered M] :
 lemma isBasic_right_interval [NoMaxOrder M]
     {s : Set M} (hs : IsBasic s) (a : M) :
     (∃ b > a, Set.Ioo a b ⊆ s) ∨ (∃ b > a, Disjoint (Set.Ioo a b) s) := by
+  obtain ⟨b, hb⟩ := exists_gt a
   cases hs with
   | Ioo c d hcd =>
-    by_cases h : d ≤ a
-    · obtain ⟨b, hb⟩ := exists_gt a
-      grind
-    · push Not at h
-      by_cases h' : a < c <;> grind
-  | Iii =>
-    obtain ⟨b, hb⟩ := exists_gt a
-    grind
-  | Ioi c | Iio c | point c =>
-    by_cases h : c ≤ a
-    · obtain ⟨b, hb⟩ := exists_gt a
-      grind
-    · push Not at h
-      grind
+    by_cases! h : d ≤ a <;> grind
+  | _ => grind
 
 /-- For a tame set $s$ and $a ∈ M$ there is some $b ∈ M$ such that
   $(a,b)$ is either contained in $s$ or disjoint with $s$ -/
@@ -169,10 +132,7 @@ lemma isTame_right_interval [NoMaxOrder M]
     obtain ⟨b, hb⟩ := exists_gt a
     grind
   · intro s s' hs hs' h
-    obtain (ha | hb) := h
-    · grind
-    · obtain (ha' | hb') := isBasic_right_interval hs' a
-      <;> grind
+    obtain (ha' | hb') := isBasic_right_interval hs' a <;> grind
 
 /-- An infinite basic set contains a non-empty open interval -/
 lemma isBasic_infinite_has_ioo [NoMaxOrder M] [NoMinOrder M]
@@ -185,7 +145,7 @@ lemma isBasic_infinite_has_ioo [NoMaxOrder M] [NoMinOrder M]
     | Ioo c d hcd => grind
     | Ioi c =>
       obtain ⟨b, hb⟩ := exists_gt c
-      refine ⟨c, b, ⟨hb, Set.Ioo_subset_Ioi_self⟩⟩
+      exact ⟨c, b, ⟨hb, Set.Ioo_subset_Ioi_self⟩⟩
     | Iio c =>
       obtain ⟨a, ha⟩ := exists_lt c
       exact ⟨a, c, ha, Set.Ioo_subset_Iio_self⟩
@@ -200,21 +160,11 @@ lemma isTame_infinite_has_ioo [NoMaxOrder M] [NoMinOrder M]
     ∃ a b, a < b ∧ Set.Ioo a b ⊆ s := by
   obtain ⟨A, h1A, h2A⟩ := h1s
   have : ∃ w ∈ A, w.Infinite := by
-    by_contra!
-    have : s.Finite := by
-      rw [h2A]
-      apply Finite.Set.finite_biUnion (A : Set (Set M)) id
-      intro i hi
-      exact this i hi
-    contradiction
+    by_contra! h
+    exact h2s (h2A ▸ Finite.Set.finite_biUnion _ id h)
   obtain ⟨w, hw1, hw2⟩ := this
   obtain ⟨a, b, h1, h2⟩ := isBasic_infinite_has_ioo (h1A w hw1) hw2
-  have : w ⊆ s := by
-    rw [h2A]
-    apply Set.subset_iUnion₂_of_subset w
-    · trivial
-    · exact hw1
-  exact ⟨a, b, h1, by grind⟩
+  exact ⟨a, b, h1, h2.trans (h2A ▸ Set.subset_biUnion_of_mem (u := id) hw1)⟩
 
 variable (L : Language) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo] [L.OrderedStructure M]
 
@@ -261,8 +211,7 @@ lemma ioo_def_covering [OMinimal L M] [DenselyOrdered M] [NoMaxOrder M]
   by_cases h1 : ∃ i, ∃ d > c, Set.Ioo c d ⊆ Y i
   · obtain ⟨i, d, hd1, hd2⟩ := h1
     obtain ⟨x, h1x, h2x⟩ := exists_between (lt_min hd1 hc.2)
-    use i, x
-    grind
+    exact ⟨i, x, by grind⟩
   · rw [not_exists] at h1
     have h2 := fun i ↦
       Or.resolve_left (isTame_right_interval (OMinimal.is_ominimal (h2Y i)) c) (h1 i)
@@ -271,12 +220,10 @@ lemma ioo_def_covering [OMinimal L M] [DenselyOrdered M] [NoMaxOrder M]
     have h3 : (Finset.univ : Finset (Fin n)).Nonempty := ⟨i, Finset.mem_univ i⟩
     obtain ⟨x, h1x, h2x⟩ := exists_between (a₁:=c) (a₂:= min b (Finset.univ.inf' h3 d))
       (by grind [Finset.lt_inf'_iff])
-    have h1d : ∀ i, min b (Finset.univ.inf' h3 d) ≤ d i := by
-      intro i
-      exact le_trans Std.min_le_right (Finset.inf'_le d (Finset.mem_univ i))
-    have : ∀ i, x ∉ Y i := by
-      intro i
-      exact Set.disjoint_left.mp (hd i).2 ⟨h1x, by grind [Std.min_le_right, Finset.inf'_le]⟩
+    have h1d : ∀ i, min b (Finset.univ.inf' h3 d) ≤ d i :=
+      fun i ↦ le_trans Std.min_le_right (Finset.inf'_le d (Finset.mem_univ i))
+    have : ∀ i, x ∉ Y i :=
+      fun i ↦ Set.disjoint_left.mp (hd i).2 ⟨h1x, by grind [Std.min_le_right, Finset.inf'_le]⟩
     have h3x : x ∈ Set.Ioo a b := by grind
     obtain ⟨i, hxi⟩ := Set.mem_iUnion.mp (h1Y h3x)
     exact absurd hxi (this i)
@@ -287,7 +234,7 @@ $c∈(a,b)$ such that $(a,c)$ and $s$ are disjoint -/
 lemma finite_in_interval_gap [DenselyOrdered M] {a b : M} (hab : a < b)
     {s : Set M} (h1s : s.Finite) (h2s : s ⊆ Set.Ioo a b) :
     ∃ c ∈ Set.Ioo a b, Disjoint (Set.Ioo a c) s := by
-  by_cases h : s.Nonempty
+  by_cases! h : s.Nonempty
   · rw [← Set.Finite.toFinset_nonempty h1s] at h
     use h1s.toFinset.min' h
     constructor
@@ -296,8 +243,7 @@ lemma finite_in_interval_gap [DenselyOrdered M] {a b : M} (hab : a < b)
       intro x h1x h2x
       have := h1s.toFinset.min'_le x (h1s.mem_toFinset.mpr h2x)
       grind
-  · push Not at h
-    obtain ⟨x, hx⟩ := exists_between hab
+  · obtain ⟨x, hx⟩ := exists_between hab
     use x
     grind
 
@@ -308,7 +254,6 @@ lemma isBasic_ordConnected {s : Set M} (hb : IsBasic s) : s.OrdConnected := by
 
 variable [DenselyOrdered M] [NoMinOrder M] [NoMaxOrder M] [OMinimal L M]
 
-/- REMOVE SOME OF THE GRINDS -/
 /-- Let $I⊆M$ be an open interval. And let $f : I → M$ be definable
 and $f(x)>x$ for all $x∈I$. Then there is $d∈I$ such that
 the set {x ∈ I : x < d ∧ d < f(x)} contains an open interval. -/
@@ -318,40 +263,34 @@ lemma interior_def_fun {a b : M} (hab : a < b) {f : M → M}
     ∀ x ∈ Set.Ioo v w, x < d ∧ d < f x := by
   let B := {x | a < x ∧ x < b ∧ ∀ t, a < t → t < x → f t < f x}
   have h1B : IsTame B := OMinimal.is_ominimal (L:=L) (by definability)
-  by_cases h2B : B.Finite
-  · have : B ⊆ Set.Ioo a b := by grind
-    obtain ⟨b', h1b', h2b'⟩ := finite_in_interval_gap hab h2B this
-    obtain ⟨t, ht⟩ := exists_between (a₁:=a) (a₂:=b') (by grind)
+  by_cases! h2B : B.Finite
+  · obtain ⟨b', h1b', h2b'⟩ := finite_in_interval_gap hab h2B (fun x hx ↦ ⟨hx.1, hx.2.1⟩)
+    obtain ⟨t, ht⟩ := exists_between h1b'.1
     let s := {x | a < x ∧ x < t ∧ f t ≤ f x}
     have h1 : ∀ r ∈ Set.Ioo a b', f t ≤ f r → ∃ q ∈ Set.Ioo a r, f t ≤ f q := by
       intro r h1r h2r
-      have : r ∉ B := Disjoint.notMem_of_mem_left h2b' h1r
-      rw [Set.notMem_ofPred_iff] at this
-      simp only [not_and, not_forall, not_lt] at this
-      obtain ⟨q, hq⟩ := this (by grind) (by grind)
-      exact ⟨q, by grind⟩
+      by_contra! h
+      exact (Disjoint.notMem_of_mem_left h2b' h1r) ⟨h1r.1, h1r.2.trans h1b'.2, by grind⟩
     have h2 : s.Nonempty := by
-      obtain ⟨y, hy⟩ := h1 t (Set.mem_Ioo.mpr ht) (by trivial)
-      exact ⟨y, by grind⟩
+      obtain ⟨y, hy⟩ := h1 t ht le_rfl
+      exact ⟨y, hy.1.1, hy.1.2, hy.2⟩
     have h3 : ∀ y ∈ s, ∃ z ∈ s, z < y := by
       intro y hy
-      obtain ⟨z, h1z, h2z⟩ := h1 y (by grind) (by grind)
+      obtain ⟨z, h1z, h2z⟩ := h1 y ⟨hy.1, hy.2.1.trans ht.2⟩  hy.2.2
       exact ⟨z, by grind⟩
     have h4 : s.Infinite := by
       by_contra! h
       obtain ⟨y, h1y, h2y⟩ := Set.exists_min_image s id h h2
-      simp only [id_eq] at h2y
-      obtain ⟨z, hz⟩ := h3 y (Set.mem_sep_iff.mpr h1y)
-      exact absurd (h2y z hz.1) (not_le.mpr hz.2)
+      obtain ⟨z, hz⟩ := h3 y h1y
+      exact (not_le.mpr hz.2) (h2y z hz.1)
     have h5 : Set.univ.Definable₁ L s := by definability
     obtain ⟨v, w, hvw⟩ := isTame_infinite_has_ioo (OMinimal.is_ominimal h5) h4
-    obtain ⟨d, hd⟩ := exists_between (a₁:=t) (a₂:= min b (f t)) (lt_min (by grind) (by grind))
-    refine ⟨d, by grind, v, w, by grind, by grind, by grind⟩
-  · push Not at h2B
-    obtain ⟨c, d, h1cd, h2cd⟩ := isTame_infinite_has_ioo h1B h2B
-    have h1 : Set.Ioo c d ⊆ Set.Ioo a b := by grind
+    obtain ⟨d, hd⟩ := exists_between (a₁:=t) (a₂:= min b (f t)) (by grind)
+    exact ⟨d, by grind, v, w, hvw.1, by grind, by grind⟩
+  · obtain ⟨c, d, h1cd, h2cd⟩ := isTame_infinite_has_ioo h1B h2B
+    have h1 : Set.Ioo c d ⊆ Set.Ioo a b := fun x hx ↦ ⟨(h2cd hx).1, (h2cd hx).2.1⟩
     obtain ⟨r, hr⟩ := exists_between h1cd
-    have h2r : r ∈ Set.Ioo a b := by exact Set.mem_Ioo.mpr (h1 hr)
+    have h2r : r ∈ Set.Ioo a b := h1 hr
     obtain ⟨t, ht⟩ := exists_between (lt_min hr.2 (h2f r h2r))
     exact ⟨t, by grind,r ,t, by grind⟩
 
