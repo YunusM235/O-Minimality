@@ -19,8 +19,8 @@ theorem definable_ramsey {n : ℕ} {a b : M} (hab : a < b)
     ∃ i, ∀ x y, x < y → x ∈ Set.Ioo v w → y ∈ Set.Ioo v w  → ![x, y] ∈ X i := by
   let Z : Fin n → Set M :=
     fun i ↦ {x | x ∈ Set.Ioo a b ∧ ∃ y, y ∈ Set.Ioo x b ∧ ∀ t ∈ Set.Ioo x y, ![x,t] ∈ X i}
-  have hZdef : ∀ i, Set.univ.Definable₁ L (Z i) := fun i ↦ by definability
-  have hZcov : Set.Ioo a b ⊆ ⋃ i, Z i := by
+  have hZ1 : ∀ i, Set.univ.Definable₁ L (Z i) := fun i ↦ by definability
+  have hZ2 : Set.Ioo a b ⊆ ⋃ i, Z i := by
     intro x hx
     obtain ⟨i, d, hd, h1xd, h2xd⟩ :=
       ioo_def_covering (fun i ↦ {y | ![x, y] ∈ X i})
@@ -28,11 +28,11 @@ theorem definable_ramsey {n : ℕ} {a b : M} (hab : a < b)
         (fun i ↦ def_fiber_left (h1X i) x) hx
     exact Set.mem_iUnion.mpr ⟨i, hx, d, by grind, fun t ht ↦ h2xd ht⟩
   obtain ⟨c, hc⟩ := exists_between hab
-  obtain ⟨i, d, h1d, h2d, hid⟩ := ioo_def_covering Z hZcov hZdef hc
+  obtain ⟨i, d, h1d, h2d, hid⟩ := ioo_def_covering Z hZ2 hZ1 hc
   let S : M → Set M := fun l ↦ {r | l < r ∧ r < b ∧ ∀ t, l < t → t < r → ![l, t] ∈ X i} ∪ {l}
   have h1S : def_family_univ₁ L S := by definability
   have h2S : ∀ x, (S x).Nonempty := by intro x; use x; grind
-  have h3S : ∀ x, BddAbove (S x) := fun x ↦ ⟨max x b, fun ?_ ?_ ↦ by grind⟩
+  have h3S : ∀ x, BddAbove (S x) := fun x ↦ ⟨max x b, fun _ _ ↦ by grind⟩
   obtain ⟨g, h1g, h2g⟩ := exists_definableFun_lub h1S h2S h3S
   have h3g : ∀ x ∈ Set.Ioo c d, x < g x := by
     intro x hx
@@ -182,45 +182,24 @@ theorem monotonicity_theorem {f : M → M} (hf : Set.univ.DefinableFun₁ L f) :
     grind
   · intro s hs
     simp only [I, Finset.union_assoc, Finset.mem_union] at hs
-    have h3 : ∀ s S : Set M, s ⊆ S \ X → ContinuousOn f s := by
-      intro s S hsS
-      apply continuousOn_of_forall_continuousAt
-      intro x hx
-      have : Disjoint s D :=
-        Set.disjoint_of_subset_right Set.subset_union_right (Set.subset_sdiff.mp hsS).2
-      have := Disjoint.notMem_of_mem_left this hx
-      simp only [Set.mem_ofPred_eq, not_not, D] at this
-      exact this
-    have hsub {A X : Set M} {I : Finset (Set M)}
-      (hI : A \ X = ⋃ t ∈ I, t) {s : Set M} (hs : s ∈ I) : s ⊆ A := by
-      have := Set.subset_biUnion_of_mem (u := id) hs
-      simp only [id_eq, SetLike.mem_coe, ← hI] at this
-      exact subset_trans this Set.sdiff_subset
+    have h3 {s S : Set M} : s ⊆ S \ X → ContinuousOn f s :=
+      fun h ↦ continuousOn_of_forall_continuousAt (by grind)
+    have h4 {A : Set M} {J : Finset (Set M)} {t : Set M} : A \ X = ⋃ a ∈ J, a → t ∈ J → t ⊆ A \ X :=
+      fun h1 h2 ↦ by rw [h1]; exact Set.subset_biUnion_of_mem (u := id) h2
     obtain h | h | h | h := hs
-    · refine
-        ⟨h1I_eq s h, h3 s (A_eq f) (by rw [h2I_eq]; exact Set.subset_biUnion_of_mem (u:=id) h), ?_⟩
+    · refine ⟨h1I_eq s h, h3 (h4 h2I_eq h), Or.inl ?_⟩
       have := localRel_to_global (isBasic_ordConnected (h1I_eq s h)) hf (r:=(·=·))
-        (by definability) (hsub h2I_eq h)
-      left; intro x hx y hy
-      obtain ⟨x', hx'⟩ := hx
-      obtain ⟨y', hy'⟩ := hy
-      rw [← hx'.2, ← hy'.2]
-      obtain hxy | hxy | hxy := lt_trichotomy x' y'
-      · exact this x' hx'.1 y' hy'.1 hxy
-      · rw [hxy]
-      · symm; exact this y' hy'.1 x' hx'.1 hxy
-    · refine
-        ⟨h1I_lt s h, h3 s (A_lt f) (by rw [h2I_lt]; exact Set.subset_biUnion_of_mem (u:=id) h), ?_⟩
-      right; left
-      exact localRel_to_global (isBasic_ordConnected (h1I_lt s h)) hf (r:=(·<·))
-        (by definability) (hsub h2I_lt h)
-    · refine
-        ⟨h1I_gt s h, h3 s (A_gt f) (by rw [h2I_gt]; exact Set.subset_biUnion_of_mem (u:=id) h), ?_⟩
-      right; right
-      exact localRel_to_global (isBasic_ordConnected (h1I_gt s h)) hf (r:=(·>·))
-        (by definability) (hsub h2I_gt h)
-    · obtain ⟨p, hp⟩ := Finset.mem_image.mp h
-      rw [← hp.2]
+        (by definability) ((h4 h2I_eq h).trans Set.sdiff_subset)
+      rintro x ⟨x', hx', rfl⟩ y ⟨y', hy', rfl⟩
+      obtain hxy | rfl | hxy := lt_trichotomy x' y'
+      exacts [this x' hx' y' hy' hxy, rfl, (this y' hy' x' hx' hxy).symm]
+    · exact ⟨h1I_lt s h, h3 (h4 h2I_lt h), Or.inr (Or.inl
+        (localRel_to_global (isBasic_ordConnected (h1I_lt s h)) hf (r:=(·<·))
+        (by definability) ((h4 h2I_lt h).trans Set.sdiff_subset)))⟩
+    · exact ⟨h1I_gt s h, h3 (h4 h2I_gt h), Or.inr (Or.inr
+        (localRel_to_global (isBasic_ordConnected (h1I_gt s h)) hf (r:=(·>·))
+        (by definability) ((h4 h2I_gt h).trans Set.sdiff_subset)))⟩
+    · obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp h
       exact ⟨IsBasic.point p, continuousOn_singleton f p,
         Or.inr (Or.inl (Set.strictMonoOn_singleton f))⟩
 
