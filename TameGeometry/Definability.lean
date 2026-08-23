@@ -2,6 +2,12 @@ import Mathlib.ModelTheory.Order
 import Mathlib.Tactic.FinCases
 import TameGeometry.Tactic
 
+/-!
+# Definability
+
+-/
+
+
 open FirstOrder FirstOrder.Language
 
 variable {L : Language} {M : Type*} [L.Structure M] {n : ℕ} (A : Set M)
@@ -167,6 +173,7 @@ lemma def_snoc_mem {α : Type*} {m : ℕ} {s : Set (Fin (m + 1) → M)}
     funext k; refine Fin.lastCases ?_ ?_ k <;> simp [Function.comp]
   simp only [h]; exact hs.preimage_comp (Fin.snoc x j)
 
+@[aesop norm forward (rule_sets := [Definability])]
 lemma def_finite {s : Set M} (hs : s.Finite) : Set.univ.Definable₁ L s := by
   unfold Set.Definable₁
   have h : {x : Fin 1 → M | x 0 ∈ s}

@@ -3,6 +3,14 @@ import TameGeometry.Topology
 import Mathlib.Data.Fin.Tuple.Take
 import Mathlib.Topology.Homeomorph.Lemmas
 
+/-!
+# Extreme value theorem
+
+We proof the extreme value theorem for
+definably complete structure
+
+-/
+
 open FirstOrder FirstOrder.Language
 
 namespace TameGeometry
@@ -323,7 +331,7 @@ lemma cbd_image_closed {n : ℕ} {m : ℕ} {s : Set (Fin n → M)}
   exact this
 
 /-- Let f : M^n → M be a definable function. Let
- X be a CBD subset of M^n and let f be continuous on s. Then the image f(X) is also CBD -/
+ X be a CBD subset of M^n and let f be continuous on X. Then the image f(X) is also CBD -/
 lemma cbd_image_is_cbd₁ {n : ℕ} {s : Set (Fin n → M)}
     (h1 : IsClosed s) (h2 : BddBelow s) (h3 : BddAbove s) (h4 : Set.univ.Definable L s)
     {f : (Fin n → M) → M} (h1f : Set.univ.DefinableFun L f) (h2f : ContinuousOn f s) :

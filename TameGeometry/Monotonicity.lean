@@ -1,12 +1,48 @@
 import TameGeometry.OMinimal
 
+/-!
+# Monotonicity theorem
+
+-/
+
 namespace TameGeometry
 
 open FirstOrder FirstOrder.Language
 
 variable {L : Language} {M : Type*} [L.IsOrdered] [L.Structure M]
-  [LinearOrder M] [L.OrderedStructure M] [M ⊨ L.dlo]
-  [OMinimal L M] [DenselyOrdered M] [NoMaxOrder M] [NoMinOrder M]
+  [LinearOrder M] [L.OrderedStructure M] [M ⊨ L.dlo] [DenselyOrdered M]
+
+/-- Let $s$ be some OrdConnected set and $f : M → M$ a definable function.
+  Let $r$ be some 2-ary transitive definable relation such that for all $x ∈ s$ there is
+  some interval $(a,b)$ around x such that for all $s,t ∈ (a,b)$ with $s<t$ we have $r f(s) f(t).
+  Then we also have $r f(x) f(y)$ for all $x,y ∈ s$ with $x<y$ -/
+lemma localRel_to_global [DefinablyComplete L M]
+    {s : Set M} (hs : s.OrdConnected) {f : M → M}
+    (hf : Set.univ.DefinableFun₁ L f) {r : M → M → Prop}
+    [IsTrans M r] (h1r : Set.univ.Definable L {v : Fin 2 → M | r (v 0) (v 1)})
+    (h2r : ∀ x ∈ s, ∃ a b, x ∈ Set.Ioo a b ∧ ∀ s ∈ Set.Ioo a b, ∀ t ∈ Set.Ioo a b,
+      s < t → (r (f s) (f t))) : ∀ x ∈ s, ∀ y ∈ s, x < y → r (f x) (f y) := by
+  intro x hx y hy hxy
+  by_contra hxy'
+  let Z := {z ∈ Set.Icc x y | x < z ∧ ¬(r (f x) (f z))}
+  have hy' : y ∈ Z := ⟨by grind, hxy, hxy'⟩
+  obtain ⟨a, ha⟩ :=
+    DefinablyComplete.glb (L:=L) Z ⟨y, hy'⟩ (by definability) (by use x; intro _ _; grind)
+  have hxa : x ≤ a := ha.2 (fun q hq ↦ hq.1.1)
+  have hay : a ≤ y := le_trans (ha.1 hy') (hy'.1.2)
+  obtain ⟨v, w, h1vw, h2vw⟩ := h2r a (hs.out hx hy ⟨hxa, hay⟩)
+  obtain ⟨q, hq⟩ := ha.exists_between h1vw.2
+  have hqvw : q ∈ Set.Ioo v w := ⟨lt_of_lt_of_le h1vw.1 hq.2.1, hq.2.2⟩
+  apply hq.1.2.2
+  obtain rfl | hax := hxa.eq_or_lt
+  · exact h2vw x h1vw q hqvw hq.1.2.1
+  · obtain ⟨p, hp⟩ := exists_between (max_lt hax h1vw.1)
+    have h3 : p < a := hp.2
+    have h4 : p ∉ Z := fun h ↦ h3.not_ge (ha.1 h)
+    have h5 : r (f x) (f p) := by grind
+    exact IsTrans.trans (f x) (f p) (f q) h5 (h2vw p (by grind) q hqvw (lt_of_lt_of_le h3 hq.2.1))
+
+variable [OMinimal L M] [NoMinOrder M] [NoMaxOrder M]
 
 /-- Let $X_1,…,X_n ⊆ M^2$ be a definable covering of $(a,b)^2$ for some $a < b$.
 Then there is a nonempty subinterval $(v,w) ⊆ (a,b)$ and $i ∈ {1,…,n}$
@@ -49,51 +85,6 @@ theorem definable_ramsey {n : ℕ} {a b : M} (hab : a < b)
     obtain ⟨r, h1r, h2r⟩ := (lt_isLUB_iff (h2g x)).mp ((h3vw x (by grind)).2)
     cases h1r <;> grind
 
-variable [TopologicalSpace M] [OrderTopology M]
-
-lemma continuous_of_def_strictMonoOn_or_strictAntiOn {a b : M} (hab : a < b)
-    {f : M → M} (h1f : Set.univ.DefinableFun₁ L f)
-    (h2f : StrictMonoOn f (Set.Ioo a b) ∨ StrictAntiOn f (Set.Ioo a b)) :
-    ∃ v w, v < w ∧ Set.Ioo v w ⊆ Set.Ioo a b ∧ ContinuousOn f (Set.Ioo v w) := by
-  have h1 : Set.InjOn f (Set.Ioo a b) := by
-    grind [StrictMonoOn.injOn, StrictAntiOn.injOn]
-  have h2 : Set.univ.Definable₁ L (f '' Set.Ioo a b) := by definability
-  have h3 := isTame_infinite_has_ioo (OMinimal.is_ominimal h2)
-    (Set.Infinite.image h1 (Set.Ioo_infinite hab))
-  obtain h2f1 | h2f2 := h2f
-  · exact strictMono_ioo_continuousOn h2f1 h3
-  · exact strictAnti_ioo_continuousOn h2f2 h3
-
-/-- Let $s$ be some OrdConnected set and $f : M → M$ a definable function.
-  Let $r$ be some 2-ary transitive definable relation such that for all $x ∈ s$ there is
-  some interval $(a,b)$ around x such that for all $s,t ∈ (a,b)$ with $s<t$ we have $r f(s) f(t).
-  Then we also have $r f(x) f(y)$ for all $x,y ∈ s$ with $x<y$ -/
-lemma localRel_to_global [DefinablyComplete L M]
-    {s : Set M} (hs : s.OrdConnected) {f : M → M}
-    (hf : Set.univ.DefinableFun₁ L f) {r : M → M → Prop}
-    [IsTrans M r] (h1r : Set.univ.Definable L {v : Fin 2 → M | r (v 0) (v 1)})
-    (h2r : ∀ x ∈ s, ∃ a b, x ∈ Set.Ioo a b ∧ ∀ s ∈ Set.Ioo a b, ∀ t ∈ Set.Ioo a b,
-      s < t → (r (f s) (f t))) : ∀ x ∈ s, ∀ y ∈ s, x < y → r (f x) (f y) := by
-  intro x hx y hy hxy
-  by_contra hxy'
-  let Z := {z ∈ Set.Icc x y | x < z ∧ ¬(r (f x) (f z))}
-  have hy' : y ∈ Z := ⟨by grind, hxy, hxy'⟩
-  obtain ⟨a, ha⟩ :=
-    DefinablyComplete.glb (L:=L) Z ⟨y, hy'⟩ (by definability) (by use x; intro _ _; grind)
-  have hxa : x ≤ a := ha.2 (fun q hq ↦ hq.1.1)
-  have hay : a ≤ y := le_trans (ha.1 hy') (hy'.1.2)
-  obtain ⟨v, w, h1vw, h2vw⟩ := h2r a (hs.out hx hy ⟨hxa, hay⟩)
-  obtain ⟨q, hq⟩ := ha.exists_between h1vw.2
-  have hqvw : q ∈ Set.Ioo v w := ⟨lt_of_lt_of_le h1vw.1 hq.2.1, hq.2.2⟩
-  apply hq.1.2.2
-  obtain rfl | hax := hxa.eq_or_lt
-  · exact h2vw x h1vw q hqvw hq.1.2.1
-  · obtain ⟨p, hp⟩ := exists_between (max_lt hax h1vw.1)
-    have h3 : p < a := hp.2
-    have h4 : p ∉ Z := fun h ↦ h3.not_ge (ha.1 h)
-    have h5 : r (f x) (f p) := by grind
-    exact IsTrans.trans (f x) (f p) (f q) h5 (h2vw p (by grind) q hqvw (lt_of_lt_of_le h3 hq.2.1))
-
 private abbrev A_rel (R : M → M → Prop) (f : M → M) : Set M :=
   {x : M | ∃ v w, x ∈ Set.Ioo v w ∧ ∀ a ∈ Set.Ioo v w, ∀ b ∈ Set.Ioo v w, a < b → R (f a) (f b)}
 
@@ -123,6 +114,21 @@ private lemma B_finite {f : M → M} (h : Set.univ.DefinableFun₁ L f) :
   · exact Or.inl (Or.inl ⟨v, w, hx, fun r hr s hs hrs ↦  h3vw r s hrs hr hs⟩)
   · exact Or.inl (Or.inr ⟨v, w, hx, fun r hr s hs hrs ↦ h3vw r s hrs hr hs⟩)
   · exact Or.inr ⟨v, w, hx, fun r hr s hs hrs ↦ h3vw r s hrs hr hs⟩
+
+variable [TopologicalSpace M] [OrderTopology M]
+
+lemma continuous_of_def_strictMonoOn_or_strictAntiOn {a b : M} (hab : a < b)
+    {f : M → M} (h1f : Set.univ.DefinableFun₁ L f)
+    (h2f : StrictMonoOn f (Set.Ioo a b) ∨ StrictAntiOn f (Set.Ioo a b)) :
+    ∃ v w, v < w ∧ Set.Ioo v w ⊆ Set.Ioo a b ∧ ContinuousOn f (Set.Ioo v w) := by
+  have h1 : Set.InjOn f (Set.Ioo a b) := by
+    grind [StrictMonoOn.injOn, StrictAntiOn.injOn]
+  have h2 : Set.univ.Definable₁ L (f '' Set.Ioo a b) := by definability
+  have h3 := isTame_infinite_has_ioo (OMinimal.is_ominimal h2)
+    (Set.Infinite.image h1 (Set.Ioo_infinite hab))
+  obtain h2f1 | h2f2 := h2f
+  · exact strictMono_ioo_continuousOn h2f1 h3
+  · exact strictAnti_ioo_continuousOn h2f2 h3
 
 lemma discontinuities_finite {f : M → M} (hf : Set.univ.DefinableFun₁ L f) :
     {x : M | ¬ContinuousAt f x}.Finite := by
@@ -166,7 +172,6 @@ theorem monotonicity_theorem {f : M → M} (hf : Set.univ.DefinableFun₁ L f) :
   let D := {x : M | ¬ContinuousAt f x}
   let X := B ∪ D
   have hX := Set.Finite.union (B_finite hf) (discontinuities_finite hf)
-  have : Set.univ.Definable₁ L X := Set.def_finite hX
   obtain ⟨I_eq, h1I_eq, h2I_eq⟩ := OMinimal.is_ominimal (L:=L) (s:= A_eq f \ X) (by definability)
   obtain ⟨I_lt, h1I_lt, h2I_lt⟩ := OMinimal.is_ominimal (L:=L) (s:= A_lt f \ X) (by definability)
   obtain ⟨I_gt, h1I_gt, h2I_gt⟩ := OMinimal.is_ominimal (L:=L) (s:= A_gt f \ X) (by definability)

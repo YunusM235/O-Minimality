@@ -228,7 +228,6 @@ lemma ioo_def_covering [OMinimal L M] [DenselyOrdered M] [NoMaxOrder M]
     obtain ⟨i, hxi⟩ := Set.mem_iUnion.mp (h1Y h3x)
     exact absurd hxi (this i)
 
-
 /-- If a finite set $s$ is contained in some interval $(a,b)$ then there is some
 $c∈(a,b)$ such that $(a,c)$ and $s$ are disjoint -/
 lemma finite_in_interval_gap [DenselyOrdered M] {a b : M} (hab : a < b)
