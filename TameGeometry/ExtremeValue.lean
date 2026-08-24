@@ -306,29 +306,23 @@ lemma cbd_image_closed {n : ℕ} {m : ℕ} {s : Set (Fin n → M)}
   let g1 : (Fin n → M) → (Fin (m+n) → M) := fun x ↦ Fin.append (f x) x
   let g2 : (Fin (m+n) → M) → (Fin n → M) := fun x ↦ x ∘ Fin.natAdd m
   have hg : ∀ x, g2 (g1 x) = x := fun x ↦ by ext i; simp [g1, g2]
-  have h1g1 : Set.univ.DefinableMap L g1 := by
-    simp only [g1]
-    exact Set.definableMap_append h1f (fun _ ↦ Set.DefinableFun.proj L)
-  have h2g1 : ContinuousOn g1 s := by
-    simp only [g1]
-    exact (Fin.continuous_append m n).comp_continuousOn (h2f.prodMk continuousOn_id)
+  have h1g1 : Set.univ.DefinableMap L g1 :=
+    Set.definableMap_append h1f (fun _ ↦ Set.DefinableFun.proj L)
+  have h2g1 : ContinuousOn g1 s :=
+    (Fin.continuous_append m n).comp_continuousOn (h2f.prodMk continuousOn_id)
   have h3g1 : Fin.take m (Nat.le_add_right m n) '' (g1 '' s) = f '' s := by
-    rw [← Set.image_comp]
-    exact Set.image_congr fun a ha ↦ funext fun x ↦ (Fin.append_left' (f a) a x)
+    rw [← Set.image_comp]; simp [g1, Fin.take_append_left]
   have h4g1 : IsClosed (g1 '' s) := by
-    have : g1 '' s = {w | w ∈ g2 ⁻¹' s ∧ g1 (g2 w) = w} := by
-      ext x
-      exact ⟨fun xh ↦ by obtain ⟨x', hx'⟩ := xh; grind,
-        fun xh ↦ by simp only [Set.mem_image]; exact ⟨(g2 x), xh⟩⟩
+    have : g1 '' s = {w | w ∈ g2 ⁻¹' s ∧ g1 (g2 w) = w} := Set.ext fun x ↦
+      ⟨fun xh ↦ by obtain ⟨x',hx'⟩ := xh; grind, fun xh ↦ by rw [Set.mem_image]; exact ⟨(g2 x), xh⟩⟩
     rw [this]
     exact (h1.preimage (Pi.continuous_precomp _)).isClosed_eq
       (h2g1.comp (Pi.continuous_precomp _).continuousOn fun x hx ↦ hx) continuousOn_id
-  have := cbd_projection_closed m (Nat.le_add_right m n) h4g1
+  rw [← h3g1]
+  exact cbd_projection_closed m (Nat.le_add_right m n) h4g1
     (cbd_image_bdd_below h1 h2 h3 h4 h1g1 h2g1)
     (cbd_image_bdd_above h1 h2 h3 h4 h1g1 h2g1)
     (Set.univ.def_image h4 h1g1)
-  rw [← h3g1]
-  exact this
 
 /-- Let f : M^n → M be a definable function. Let
  X be a CBD subset of M^n and let f be continuous on X. Then the image f(X) is also CBD -/
