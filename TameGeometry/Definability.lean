@@ -17,6 +17,8 @@ namespace Set
 attribute [definability]
   Set.DefinableFun.proj
   Set.DefinableFun.ofPred_eq
+
+attribute [aesop unsafe 30% apply (rule_sets := [Definability])]
   Set.DefinableFun.comp
 
 attribute [aesop norm unfold (rule_sets := [Definability])]
@@ -152,7 +154,7 @@ lemma def_pair_mem {α : Type*} {s : Set (Fin 2 → M)}
   have h : ∀ f : α → M, ![f i, f j] = f ∘ ![i, j] := fun f ↦ by funext k; fin_cases k <;> rfl
   simp only [h]; exact hs.preimage_comp ![i, j]
 
-@[aesop safe apply 10 (rule_sets := [Definability])]
+@[aesop unsafe 10% apply (rule_sets := [Definability])]
 lemma def_rel_pair {α : Type*} {R : M → M → Prop}
     (hR : Set.univ.Definable L {v : Fin 2 → M | R (v 0) (v 1)})
     {g1 g2 : (α → M) → M}
