@@ -20,14 +20,27 @@ variable {M : Type*} [LinearOrder M] [TopologicalSpace M]
   {L : Language} [L.IsOrdered] [L.Structure M]
   [M ⊨ L.dlo] [L.OrderedStructure M] [DefinablyComplete L M]
 
+/--
+$x ∈ M^n$ is inside the box defined by two points $p_1, p_2 ∈ M^n$
+-/
 private def memBox {n : ℕ} (p : Fin n ⊕ Fin n → M) (x : Fin n → M) : Prop :=
   ∀ i, p (Sum.inl i) < x i ∧ x i < p (Sum.inr i)
 
-private def lastFromBox {n : ℕ} (s : Set (Fin (n + 1) → M)) (p : Fin n ⊕ Fin n → M) : Set M :=
-  {m | ∃ y : Fin n → M, memBox p y ∧ Fin.snoc y m ∈ s}
+/--
+Let $S ⊆ M^{n+1}$ and $p_1, p_2 ∈ M^n$.
+lastFromBox contains the last coordinate of all $x ∈ S$
+for which the projection to the first $n$ coordinates
+is inside the box defined by $p_1$ and $p_2$.
+-/
+private def lastFromBox {n : ℕ} (S : Set (Fin (n + 1) → M)) (p : Fin n ⊕ Fin n → M) : Set M :=
+  {m | ∃ y : Fin n → M, memBox p y ∧ Fin.snoc y m ∈ S}
 
-private def boxLUB {n : ℕ} (s : Set (Fin (n + 1) → M)) (x : Fin n → M) : Set M :=
-  {m | ∃ y : Fin n ⊕ Fin n → M, memBox y x ∧ IsLUB (lastFromBox s y) m}
+/--
+Let $S ⊆ M^{n+1}$ and $x ∈ M^n$.
+boxLUB contains the supremum of lastFromBox for all boxes containg $x$ (if it exists).
+-/
+private def boxLUB {n : ℕ} (S : Set (Fin (n + 1) → M)) (x : Fin n → M) : Set M :=
+  {m | ∃ p : Fin n ⊕ Fin n → M, memBox p x ∧ IsLUB (lastFromBox S p) m}
 
 private lemma snoc_glb_mem {n : ℕ} {s : Set (Fin (n + 1) → M)} (h1 : IsClosed s)
     {x : Fin n → M} {c : M}
@@ -60,6 +73,10 @@ private lemma snoc_glb_mem {n : ℕ} {s : Set (Fin (n + 1) → M)} (h1 : IsClose
   · rw [Fin.snoc_last]
     exact ⟨h2t, (hu.1 ⟨y, hy.1, hy.2⟩).trans_lt h2u⟩
 
+/--
+If $S ⊆ M^{n+1}$ is CBD then the projection of
+$S$ to the first $n$ coordinates is also closed.
+-/
 lemma cbd_init_closed {n : ℕ} {s : Set (Fin (n + 1) → M)}
     (h1 : IsClosed s) (h2 : BddBelow s) (h3 : BddAbove s)
     (h4 : Set.univ.Definable L s) : IsClosed (Fin.init '' s) := by
