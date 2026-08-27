@@ -75,11 +75,8 @@ theorem definable_ramsey {n : ℕ} {a b : M} (hab : a < b)
     obtain ⟨-, y, h1y, h2y⟩ := hid hx
     exact lt_of_lt_of_le h1y.1 ((h2g x).1 (by grind))
   obtain ⟨m, hm, v, w, h1vw, h2vw, h3vw⟩ := interior_def_fun h2d h1g h3g
-  obtain ⟨p, hp⟩ := exists_between h1vw
-  obtain ⟨q, hq⟩ := exists_between hp.2
-  refine ⟨p, q, by grind, ?_, ?_⟩
-  · have : Set.Ioo p q ⊆ Set.Ioo v w := by grind
-    grind
+  refine ⟨v, w, by grind, ?_, ?_⟩
+  · grind
   · use i
     intro x y hxy hx hy
     obtain ⟨r, h1r, h2r⟩ := (lt_isLUB_iff (h2g x)).mp ((h3vw x (by grind)).2)

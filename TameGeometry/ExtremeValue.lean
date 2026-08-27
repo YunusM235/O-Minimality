@@ -63,8 +63,7 @@ private lemma snoc_glb_mem {n : ℕ} {s : Set (Fin (n + 1) → M)} (h1 : IsClose
     exact ⟨z, fun i ↦ ⟨(le_max_right _ _).trans_lt (hz i).1,
       (hz i).2.trans_le (min_le_right _ _)⟩, hzs⟩
   have h2u: u < b (Fin.last n) := (hu.2 (upperBounds_mono_set h2p he.2.1)).trans_lt hd.2
-  obtain ⟨t, h1t, h2t⟩ :=
-    (lt_isLUB_iff hu).mp (h2ab.1.trans_le (h3.1 ⟨p, h1p, hu⟩))
+  obtain ⟨t, h1t, h2t⟩ := (lt_isLUB_iff hu).mp (h2ab.1.trans_le (h3.1 ⟨p, h1p, hu⟩))
   obtain ⟨y, hy⟩ := id h1t
   refine ⟨Fin.snoc y t, hy.2, Fin.forall_fin_succ'.mpr ⟨?_, ?_⟩⟩
   · intro i
