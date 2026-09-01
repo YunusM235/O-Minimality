@@ -24,18 +24,18 @@ lemma localRel_to_global [DefinablyComplete L M]
       s < t → (r (f s) (f t))) : ∀ x ∈ s, ∀ y ∈ s, x < y → r (f x) (f y) := by
   intro x hx y hy hxy
   by_contra hxy'
-  let Z := {z ∈ Set.Icc x y | x < z ∧ ¬(r (f x) (f z))}
-  have hy' : y ∈ Z := ⟨by grind, hxy, hxy'⟩
+  let Z := {z ∈ Set.Ioc x y | ¬(r (f x) (f z))}
+  have hy' : y ∈ Z := ⟨by grind, hxy'⟩
   obtain ⟨a, ha⟩ :=
     DefinablyComplete.glb (L:=L) Z ⟨y, hy'⟩ (by definability) (by use x; intro _ _; grind)
-  have hxa : x ≤ a := ha.2 (fun q hq ↦ hq.1.1)
+  have hxa : x ≤ a := ha.2 (fun q hq ↦ hq.1.1.le)
   have hay : a ≤ y := le_trans (ha.1 hy') (hy'.1.2)
   obtain ⟨v, w, h1vw, h2vw⟩ := h2r a (hs.out hx hy ⟨hxa, hay⟩)
   obtain ⟨q, hq⟩ := ha.exists_between h1vw.2
   have hqvw : q ∈ Set.Ioo v w := ⟨lt_of_lt_of_le h1vw.1 hq.2.1, hq.2.2⟩
-  apply hq.1.2.2
+  apply hq.1.2
   obtain rfl | hax := hxa.eq_or_lt
-  · exact h2vw x h1vw q hqvw hq.1.2.1
+  · exact h2vw x h1vw q hqvw hq.1.1.1
   · obtain ⟨p, hp⟩ := exists_between (max_lt hax h1vw.1)
     have h3 : p < a := hp.2
     have h4 : p ∉ Z := fun h ↦ h3.not_ge (ha.1 h)
@@ -75,8 +75,7 @@ theorem definable_ramsey {n : ℕ} {a b : M} (hab : a < b)
     obtain ⟨-, y, h1y, h2y⟩ := hid hx
     exact lt_of_lt_of_le h1y.1 ((h2g x).1 (by grind))
   obtain ⟨m, hm, v, w, h1vw, h2vw, h3vw⟩ := interior_def_fun h2d h1g h3g
-  refine ⟨v, w, by grind, ?_, ?_⟩
-  · grind
+  refine ⟨v, w, by grind, by grind, ?_⟩
   · use i
     intro x y hxy hx hy
     obtain ⟨r, h1r, h2r⟩ := (lt_isLUB_iff (h2g x)).mp ((h3vw x (by grind)).2)
@@ -168,25 +167,26 @@ theorem monotonicity_theorem {f : M → M} (hf : Set.univ.DefinableFun₁ L f) :
   let B := (A_eq f ∪ A_lt f ∪ A_gt f)ᶜ
   let D := {x : M | ¬ContinuousAt f x}
   let X := B ∪ D
-  have hX := Set.Finite.union (B_finite hf) (discontinuities_finite hf)
-  obtain ⟨I_eq, h1I_eq, h2I_eq⟩ := OMinimal.is_ominimal (L:=L) (s:= A_eq f \ X) (by definability)
-  obtain ⟨I_lt, h1I_lt, h2I_lt⟩ := OMinimal.is_ominimal (L:=L) (s:= A_lt f \ X) (by definability)
-  obtain ⟨I_gt, h1I_gt, h2I_gt⟩ := OMinimal.is_ominimal (L:=L) (s:= A_gt f \ X) (by definability)
+  have hD : D.Finite := discontinuities_finite hf
+  have hX := (B_finite hf).union hD
+  obtain ⟨I_eq, h1I_eq, h2I_eq⟩ := OMinimal.is_ominimal (L:=L) (s:= A_eq f \ D) (by definability)
+  obtain ⟨I_lt, h1I_lt, h2I_lt⟩ := OMinimal.is_ominimal (L:=L) (s:= A_lt f \ D) (by definability)
+  obtain ⟨I_gt, h1I_gt, h2I_gt⟩ := OMinimal.is_ominimal (L:=L) (s:= A_gt f \ D) (by definability)
   let X' := hX.toFinset.image (fun p ↦ ({p} : Set M))
   let I := I_eq ∪ I_lt ∪ I_gt ∪ X'
   refine ⟨I, ?_, ?_⟩
   · have hX' : ⋃ s ∈ X', s = X := by
       rw [Finset.set_biUnion_finset_image, ← Finset.set_biUnion_coe,
         Set.biUnion_of_singleton, Set.Finite.coe_toFinset]
-    have : ⋃ s ∈ I, s = A_eq f \ X ∪ A_lt f \ X ∪ A_gt f \ X ∪ X := by
+    have : ⋃ s ∈ I, s = A_eq f \ D ∪ A_lt f \ D ∪ A_gt f \ D ∪ X := by
       simp_rw [I, Finset.set_biUnion_union, h2I_eq, h2I_lt, h2I_gt, hX']
-    rw [this, ← Set.union_sdiff_distrib, ← Set.union_sdiff_distrib, Set.sdiff_union_self]
+    rw [this, ← Set.union_sdiff_distrib, ← Set.union_sdiff_distrib]
     grind
   · intro s hs
     simp only [I, Finset.union_assoc, Finset.mem_union] at hs
-    have h3 {s S : Set M} : s ⊆ S \ X → ContinuousOn f s :=
+    have h3 {s S : Set M} : s ⊆ S \ D → ContinuousOn f s :=
       fun h ↦ continuousOn_of_forall_continuousAt (by grind)
-    have h4 {A : Set M} {J : Finset (Set M)} {t : Set M} : A \ X = ⋃ a ∈ J, a → t ∈ J → t ⊆ A \ X :=
+    have h4 {A : Set M} {J : Finset (Set M)} {t : Set M} : A \ D = ⋃ a ∈ J, a → t ∈ J → t ⊆ A \ D :=
       fun h1 h2 ↦ by rw [h1]; exact Set.subset_biUnion_of_mem (u := id) h2
     obtain h | h | h | h := hs
     · refine ⟨h1I_eq s h, h3 (h4 h2I_eq h), Or.inl ?_⟩
