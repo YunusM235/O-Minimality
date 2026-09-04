@@ -100,10 +100,10 @@ lemma definableFun₁_of_graph {f : M → M} (h : A.Definable L {p : Fin 2 → M
   exact h.preimage_comp fun i : Fin 2 ↦ if i = 0 then some 0 else none
 
 @[definability]
-lemma def_comp_coord {L : Language} {α : Type*} [L.Structure M]
-    {f : M → M} (hf : A.DefinableFun₁ L f) (i : α) :
-    A.DefinableFun L (fun g : α → M ↦ f (g i)) :=
-  hf.comp (fun _ ↦ Set.DefinableFun.proj L)
+lemma def_comp₁ {α : Type*} {f : M → M} (hf : A.DefinableFun₁ L f)
+    {g : (α → M) → M} (hg : A.DefinableFun L g) :
+    A.DefinableFun L (fun v ↦ f (g v)) :=
+  hf.comp (fun _ ↦ hg)
 
 /-- The image of a Definable set under a DefinableMap is Definable -/
 @[definability]
@@ -148,11 +148,10 @@ lemma def_preimage_comp {α β : Type*} {A : Set M} {s : Set (β → M)}
   apply h.preimage_comp
 
 @[definability]
-lemma def_pair_mem {α : Type*} {s : Set (Fin 2 → M)}
-    (hs : Set.univ.Definable L s) (i j : α) :
-    Set.univ.Definable L {f : α → M | ![f i, f j] ∈ s} := by
-  have h : ∀ f : α → M, ![f i, f j] = f ∘ ![i, j] := fun f ↦ by funext k; fin_cases k <;> rfl
-  simp only [h]; exact hs.preimage_comp ![i, j]
+lemma def_pair_mem {α : Type*} {s : Set (Fin 2 → M)} (hs : Set.univ.Definable L s)
+    {f g : (α → M) → M} (h1 : Set.univ.DefinableFun L f) (h2 : Set.univ.DefinableFun L g) :
+    Set.univ.Definable L {v : α → M | ![f v, g v] ∈ s} :=
+  hs.preimage_map (fun i ↦ by fin_cases i <;> assumption)
 
 @[aesop unsafe 10% apply (rule_sets := [Definability])]
 lemma def_rel_pair {α : Type*} {R : M → M → Prop}
@@ -169,11 +168,11 @@ lemma def_rel_pair {α : Type*} {R : M → M → Prop}
 
 @[definability]
 lemma def_snoc_mem {α : Type*} {m : ℕ} {s : Set (Fin (m + 1) → M)}
-    (x : Fin m → α) (j : α) (hs : Set.univ.Definable L s) :
-    Set.univ.Definable L {a : α → M | Fin.snoc (a ∘ x) (a j) ∈ s} := by
-  have h : ∀ a : α → M, Fin.snoc (a ∘ x) (a j) = a ∘ Fin.snoc x j := fun a ↦ by
-    funext k; refine Fin.lastCases ?_ ?_ k <;> simp [Function.comp]
-  simp only [h]; exact hs.preimage_comp (Fin.snoc x j)
+    (hs : Set.univ.Definable L s)
+    {f : (α → M) → (Fin m → M)} (hf : Set.univ.DefinableMap L f)
+    {g : (α → M) → M} (hg : Set.univ.DefinableFun L g) :
+    Set.univ.Definable L {v : α → M | Fin.snoc (f v) (g v) ∈ s} :=
+  hs.preimage_map (fun i ↦ Fin.lastCases (by simpa using hg) (fun j ↦ by simpa using hf j) i)
 
 @[aesop norm forward (rule_sets := [Definability])]
 lemma def_finite {s : Set M} (hs : s.Finite) : Set.univ.Definable₁ L s := by
@@ -214,9 +213,10 @@ attribute [aesop norm unfold (rule_sets := [Definability])]
 
 @[aesop unsafe 20% apply (rule_sets := [Definability])]
 lemma def_family_univ_mem {α : Type*} {n : ℕ} {f : N → Set (Fin n → N)}
-    (h : def_family_univ L f) (i : α) (g : Fin n → α) :
-    Set.univ.Definable L {v : α → N | (v ∘ g) ∈ f (v i)} :=
-  h.preimage_comp (Fin.cons i g)
+    (h : def_family_univ L f) {G : (α → N) → (Fin n → N)} (hG : Set.univ.DefinableMap L G)
+    {g : (α → N) → N} (hg : Set.univ.DefinableFun L g) :
+    Set.univ.Definable L {v : α → N | G v ∈ f (g v)} :=
+  h.preimage_map (F := fun v ↦ Fin.cons (g v) (G v)) (Fin.cases hg hG)
 
 /-- Each fibre of a definable family is definable -/
 lemma def_family_fiber {n : ℕ} {f : N → Set (Fin n → N)} (h : def_family_univ L f) (x : N) :
