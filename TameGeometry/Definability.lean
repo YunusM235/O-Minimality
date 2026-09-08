@@ -174,6 +174,11 @@ lemma def_snoc_mem {α : Type*} {m : ℕ} {s : Set (Fin (m + 1) → M)}
     Set.univ.Definable L {v : α → M | Fin.snoc (f v) (g v) ∈ s} :=
   hs.preimage_map (fun i ↦ Fin.lastCases (by simpa using hg) (fun j ↦ by simpa using hf j) i)
 
+@[aesop unsafe 20% apply (rule_sets := [Definability])]
+lemma def_mem₁ {α : Type*} {s : Set M} {f : (α → M) → M}
+    (hs : Set.univ.Definable₁ L s) (hf : Set.univ.DefinableFun L f) :
+    Set.univ.Definable L {v : α → M | f v ∈ s} := hs.preimage_map (fun _ ↦ hf)
+
 @[aesop norm forward (rule_sets := [Definability])]
 lemma def_finite {s : Set M} (hs : s.Finite) : Set.univ.Definable₁ L s := by
   unfold Set.Definable₁

@@ -16,11 +16,17 @@ open FirstOrder FirstOrder.Language
 every non-empty bounded definable set has an infimum and supremum in the structure -/
 class DefinablyComplete (L : Language) (M : Type*) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo]
   [LinearOrder M] [L.OrderedStructure M] : Prop where
-  glb : ∀ (s : Set M), s.Nonempty → Set.univ.Definable₁ L s → BddBelow s → ∃ a, IsGLB s a
   lub : ∀ (s : Set M), s.Nonempty → Set.univ.Definable₁ L s → BddAbove s → ∃ b, IsLUB s b
 
 variable {M : Type*} {L : Language} [LinearOrder M] [L.IsOrdered]
   [L.Structure M] [M ⊨ L.dlo] [L.OrderedStructure M] [DefinablyComplete L M]
+
+lemma DefinablyComplete.glb :
+    ∀ (s : Set M), s.Nonempty → Set.univ.Definable₁ L s → BddBelow s → ∃ a, IsGLB s a := by
+  intro s ⟨x, hx⟩ h2 h3
+  obtain ⟨r, hr⟩ := DefinablyComplete.lub (L:=L)
+    (lowerBounds s) h3 (by definability) ⟨x, fun _ h ↦ h hx⟩
+  exact ⟨r, isLUB_lowerBounds.mp hr⟩
 
 lemma exists_definableFun_lub {s : M → Set M} (h1s : def_family_univ₁ L s)
     (h2s : ∀ x, (s x).Nonempty) (h3s : ∀ x, BddAbove (s x)) :

@@ -48,16 +48,6 @@ lemma tame_induction (P : Set M → Prop) (h0 : P ∅)
     have h3 : P (⋃ x ∈ A, x) := ih (fun a ha ↦ h1 a (Finset.mem_insert_of_mem ha))
     exact hi (⋃ x ∈ A, x) a h2 (h1 a (Finset.mem_insert_self a A)) h3
 
-/-- basic sets that are bounded below are a point, an open interval or a left-open interval -/
-lemma bdd_below_basic [NoMinOrder M] (s : Set M) (h1 : IsBasic s) (h2 : BddBelow s) :
-    (∃ p, s = {p}) ∨ (∃ a b, a < b ∧ s = Set.Ioo a b) ∨ (∃ a, s = Set.Ioi a) := by
-  cases h1 with
-  | point p => left; use p
-  | Ioo a b => right; left; use a, b
-  | Ioi a => right; right; use a
-  | Iio b => exact absurd h2 (not_bddBelow_Iio b)
-  | Iii => exact absurd h2 not_bddBelow_univ
-
 /-- basic sets that are bounded above are a point, an open interval or a right-open interval -/
 lemma bdd_above_basic [NoMaxOrder M] (s : Set M) (h1 : IsBasic s) (h2 : BddAbove s) :
     (∃ p, s = {p}) ∨ (∃ a b, a < b ∧ s = Set.Ioo a b) ∨ (∃ b, s = Set.Iio b) := by
@@ -68,33 +58,12 @@ lemma bdd_above_basic [NoMaxOrder M] (s : Set M) (h1 : IsBasic s) (h2 : BddAbove
   | Iio b => right; right; use b
   | Iii => exact absurd h2 not_bddAbove_univ
 
-/-- basic sets which are bounded below have an infimum -/
-lemma bdd_below_basic_glb [NoMinOrder M] [DenselyOrdered M]
-    (s : Set M) (h1 : IsBasic s) (h2 : BddBelow s) :
-    ∃ x, IsGLB s x := by
-  obtain ⟨p, rfl⟩ | ⟨a, b, hab, rfl⟩ | ⟨a, rfl⟩ := bdd_below_basic s h1 h2
-  exacts [⟨p, isGLB_singleton⟩, ⟨a, isGLB_Ioo hab⟩, ⟨a, isGLB_Ioi⟩]
-
 /-- basic sets which are bounded above have a supremum -/
 lemma bdd_above_basic_lub [NoMaxOrder M] [DenselyOrdered M]
     (s : Set M) (h1 : IsBasic s) (h2 : BddAbove s) :
     ∃ x, IsLUB s x := by
   obtain ⟨p, rfl⟩ | ⟨a, b, hab, rfl⟩ | ⟨b, rfl⟩ := bdd_above_basic s h1 h2
   exacts [⟨p, isLUB_singleton⟩, ⟨b, isLUB_Ioo hab⟩, ⟨b, isLUB_Iio⟩]
-
-/-- Bounded below tame sets have an infimum -/
-lemma has_glb [NoMinOrder M] [DenselyOrdered M] :
-    ∀ (s : Set M), IsTame s → s.Nonempty → BddBelow s → ∃ x, IsGLB s x := by
-  apply tame_induction
-  · simp
-  · intro s b h1 h2 h3 h4 h5
-    by_cases! h : s.Nonempty
-    · obtain ⟨xs, hxs⟩ := (h3 h (h5.mono Set.subset_union_left))
-      obtain ⟨xb, hxb⟩ := bdd_below_basic_glb b h2 (h5.mono Set.subset_union_right)
-      exact ⟨min xs xb, IsGLB.union hxs hxb⟩
-    · subst h
-      rw [Set.empty_union] at *
-      exact bdd_below_basic_glb b h2 h5
 
 /-- Bounded above tame sets have a supremum -/
 lemma has_lub [NoMaxOrder M] [DenselyOrdered M] :
@@ -171,7 +140,6 @@ variable (L : Language) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo] [L.OrderedSt
 /-- O-Minimal structures are definably complete -/
 instance [OMinimal L M] [NoMaxOrder M] [NoMinOrder M] [DenselyOrdered M] :
   DefinablyComplete L M where
-  glb s h1 h2 h3 := has_glb (M:=M) s (OMinimal.is_ominimal h2) h1 h3
   lub s h1 h2 h3 := has_lub (M:=M) s (OMinimal.is_ominimal h2) h1 h3
 
 lemma isBasic_open_or_singleton [TopologicalSpace M] [OrderTopology M]

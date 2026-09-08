@@ -7,9 +7,9 @@ import Mathlib.Topology.Order.MonotoneContinuity
 
 namespace TameGeometry
 
-variable {α : Type*} [TopologicalSpace α]
+variable {X : Type*} [TopologicalSpace X]
 
-lemma frontier_union (A : Finset (Set α)) :
+lemma frontier_union (A : Finset (Set X)) :
     frontier (⋃ a ∈ A, a) ⊆ (⋃ a ∈ A, frontier a) := by
   intro x ⟨h1,h2⟩
   rw [A.closure_biUnion] at h1
@@ -17,10 +17,10 @@ lemma frontier_union (A : Finset (Set α)) :
   apply Set.mem_biUnion ha
   exact ⟨hxa, fun h ↦ h2 (interior_mono (Set.subset_biUnion_of_mem ha) h)⟩
 
-variable [LinearOrder α] [OrderTopology α] {β : Type*} [TopologicalSpace β]
-  [LinearOrder β] [OrderTopology β] [DenselyOrdered β]
+variable [LinearOrder X] [OrderTopology X] {Y : Type*} [TopologicalSpace Y]
+  [LinearOrder Y] [OrderTopology Y] [DenselyOrdered Y]
 
-theorem strictMono_ioo_continuousOn {f : α → β} {a b : α}
+theorem strictMono_ioo_continuousOn {f : X → Y} {a b : X}
     (h1 : StrictMonoOn f (Set.Ioo a b))
     (h2 : ∃ c d, c < d ∧ Set.Ioo c d ⊆ f '' Set.Ioo a b) :
     ∃ v w, v < w ∧ Set.Ioo v w ⊆ Set.Ioo a b ∧ ContinuousOn f (Set.Ioo v w) := by
@@ -42,7 +42,7 @@ theorem strictMono_ioo_continuousOn {f : α → β} {a b : α}
   exact (StrictMonoOn.continuousAt_of_image_mem_nhds (h1.mono (by grind)) (Ioo_mem_nhds hx.1 hx.2)
     (Filter.mem_of_superset (Ioo_mem_nhds h4 h5) h3)).continuousWithinAt
 
-theorem strictAnti_ioo_continuousOn {f : α → β} {a b : α}
+theorem strictAnti_ioo_continuousOn {f : X → Y} {a b : X}
     (hf : StrictAntiOn f (Set.Ioo a b))
     (hcd : ∃ c d, c < d ∧ Set.Ioo c d ⊆ f '' Set.Ioo a b) :
     ∃ v w, v < w ∧ Set.Ioo v w ⊆ Set.Ioo a b ∧ ContinuousOn f (Set.Ioo v w) := by
@@ -52,12 +52,12 @@ theorem strictAnti_ioo_continuousOn {f : α → β} {a b : α}
       ⟨OrderDual.toDual d, OrderDual.toDual c, h1, fun x hx ↦ h2 ⟨hx.2, hx.1⟩⟩
   exact ⟨v, w, h3, h4, continuous_ofDual.comp_continuousOn h5⟩
 
-variable [NoMinOrder α] [NoMaxOrder α]
+variable [NoMinOrder X] [NoMaxOrder X]
 
 lemma closure_order (n : ℕ) :
-    ∀ (X : Set (Fin n → α)),
-    closure X = {y | ∀ (a b : (Fin n → α)), (∀ (i : Fin n), (a i < y i) ∧ (y i < b i))
-    → ∃ x ∈ X, ∀ (i : Fin n), (a i < x i) ∧ (x i < b i)} := by
+    ∀ (A : Set (Fin n → X)),
+    closure A = {y | ∀ (a b : (Fin n → X)), (∀ (i : Fin n), (a i < y i) ∧ (y i < b i))
+    → ∃ x ∈ A, ∀ (i : Fin n), (a i < x i) ∧ (x i < b i)} := by
   intro X
   ext z
   rw [mem_closure_iff_nhds]
@@ -92,7 +92,7 @@ lemma closure_order (n : ℕ) :
     have hx3 : ∀ (i : Fin n), x i ∈ hi2 i := by grind only [Set.subset_def]
     grind only [Set.subset_def, Set.mem_pi]
 
-lemma continuousAt_iff {f : α → α} {x : α} :
+lemma continuousAt_iff {f : X → X} {x : X} :
     ContinuousAt f x ↔ ∀ p q, p < f x → f x < q →
     ∃ c d, c < x ∧ x < d ∧ ∀ z, c < z → z < d → p < f z ∧ f z < q := by
   rw [ContinuousAt, (nhds_basis_Ioo x).tendsto_iff (nhds_basis_Ioo (f x))]
