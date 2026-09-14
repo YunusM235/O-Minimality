@@ -158,13 +158,7 @@ lemma def_rel_pair {α : Type*} {R : M → M → Prop}
     (hR : Set.univ.Definable L {v : Fin 2 → M | R (v 0) (v 1)})
     {g1 g2 : (α → M) → M}
     (h1 : Set.univ.DefinableFun L g1) (h2 : Set.univ.DefinableFun L g2) :
-    Set.univ.Definable L {a : α → M | R (g1 a) (g2 a)} := by
-  have h : {a : α → M | R (g1 a) (g2 a)}
-      = (fun a : α → M ↦ ![g1 a, g2 a]) ⁻¹' {v : Fin 2 → M | R (v 0) (v 1)} := by
-    ext a; simp
-  rw [h]
-  refine hR.preimage_map (fun i ↦ ?_)
-  fin_cases i <;> definability
+    Set.univ.Definable L {a : α → M | R (g1 a) (g2 a)} := def_pair_mem hR h1 h2
 
 @[definability]
 lemma def_snoc_mem {α : Type*} {m : ℕ} {s : Set (Fin (m + 1) → M)}

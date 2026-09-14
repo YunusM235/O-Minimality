@@ -162,8 +162,6 @@ $f$ is continuous on $s$ and constant, strictly increasing or strictly decreasin
 theorem monotonicity_theorem {f : M → M} (hf : Set.univ.DefinableFun₁ L f) :
     ∃ A : Finset (Set M), (⋃ s ∈ A, s = Set.univ) ∧ ∀ s ∈ A, IsBasic s ∧
     ContinuousOn f s ∧ ((f '' s).Subsingleton ∨ StrictMonoOn f s ∨ StrictAntiOn f s) := by
-  by_cases! hM : Nonempty M
-  case neg => exact ⟨∅, by simp [Set.univ_eq_empty_iff.mpr hM]⟩
   let B := (A_eq f ∪ A_lt f ∪ A_gt f)ᶜ
   let D := {x : M | ¬ContinuousAt f x}
   let X := B ∪ D
