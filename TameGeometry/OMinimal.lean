@@ -29,7 +29,7 @@ def IsTame (s : Set M) : Prop :=
   ∃ (A : Finset (Set M)), (∀ a ∈ A, IsBasic a) ∧ s = ⋃ a ∈ A, a
 
 /-- A structure is O-Minimal if every definable set is a finite union of points and intervals -/
-class OMinimal (L : Language) (M : Type*) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo]
+class OMinimal (L : Language) (M : Type*) [L.IsOrdered] [L.Structure M]
   [LinearOrder M] [L.OrderedStructure M] : Prop where
   is_ominimal : ∀ {s : Set M}, Set.univ.Definable₁ L s → IsTame s
 
@@ -135,7 +135,7 @@ lemma isTame_infinite_has_ioo [NoMaxOrder M] [NoMinOrder M]
   obtain ⟨a, b, h1, h2⟩ := isBasic_infinite_has_ioo (h1A w hw1) hw2
   exact ⟨a, b, h1, h2.trans (h2A ▸ Set.subset_biUnion_of_mem (u := id) hw1)⟩
 
-variable (L : Language) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo] [L.OrderedStructure M]
+variable (L : Language) [L.IsOrdered] [L.Structure M] [L.OrderedStructure M]
 
 /-- O-Minimal structures are definably complete -/
 instance [OMinimal L M] [NoMaxOrder M] [NoMinOrder M] [DenselyOrdered M] :

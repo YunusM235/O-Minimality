@@ -14,12 +14,12 @@ open FirstOrder FirstOrder.Language
 
 /-- A structure is definably complete if
 every non-empty bounded definable set has an infimum and supremum in the structure -/
-class DefinablyComplete (L : Language) (M : Type*) [L.IsOrdered] [L.Structure M] [M ⊨ L.dlo]
+class DefinablyComplete (L : Language) (M : Type*) [L.IsOrdered] [L.Structure M]
   [LinearOrder M] [L.OrderedStructure M] : Prop where
   lub : ∀ (s : Set M), s.Nonempty → Set.univ.Definable₁ L s → BddAbove s → ∃ b, IsLUB s b
 
 variable {M : Type*} {L : Language} [LinearOrder M] [L.IsOrdered]
-  [L.Structure M] [M ⊨ L.dlo] [L.OrderedStructure M] [DefinablyComplete L M]
+  [L.Structure M] [L.OrderedStructure M] [DefinablyComplete L M]
 
 lemma DefinablyComplete.glb :
     ∀ (s : Set M), s.Nonempty → Set.univ.Definable₁ L s → BddBelow s → ∃ a, IsGLB s a := by

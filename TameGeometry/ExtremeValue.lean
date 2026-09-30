@@ -18,7 +18,7 @@ namespace TameGeometry
 variable {M : Type*} [LinearOrder M] [TopologicalSpace M]
   [OrderTopology M] [NoMinOrder M] [NoMaxOrder M]
   {L : Language} [L.IsOrdered] [L.Structure M]
-  [M ⊨ L.dlo] [L.OrderedStructure M] [DefinablyComplete L M]
+  [L.OrderedStructure M] [DefinablyComplete L M]
 
 /--
 $x ∈ M^n$ is inside the box defined by two points $p_1, p_2 ∈ M^n$

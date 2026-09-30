@@ -10,7 +10,7 @@ namespace TameGeometry
 open FirstOrder FirstOrder.Language
 
 variable {L : Language} {M : Type*} [L.IsOrdered] [L.Structure M]
-  [LinearOrder M] [L.OrderedStructure M] [M ⊨ L.dlo] [DenselyOrdered M]
+  [LinearOrder M] [L.OrderedStructure M] [DenselyOrdered M]
 
 /-- Let $s$ be some OrdConnected set and $f : M → M$ a definable function.
   Let $r$ be some 2-ary transitive definable relation such that for all $x ∈ s$ there is
